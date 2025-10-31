@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pip install:*)",
+      "Bash(python -m src.models.pose_detector:*)",
+      "Bash(timeout:*)",
+      "Bash(python:*)",
+      "Bash(taskkill:*)",
+      "Bash(nul)",
+      "Bash(dir /B /A-D)",
+      "Bash(git checkout src/models/au_extractor.py)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,210 @@
+# HEAL - Emotion Recognition System Configuration
+
+# Face Detection Settings (MediaPipe)
+face_detection:
+  model_selection: 1 # 0 for short-range (2m), 1 for full-range (5m)
+  min_detection_confidence: 0.5
+
+# Face Tracking Settings
+face_tracking:
+  enabled: true
+  max_disappeared: 30 # Maximum frames a face can disappear before removal
+  iou_threshold: 0.3 # Minimum IoU to consider same face
+  min_stable_frames: 30 # Minimum frames to be detected before assigning ID (1 sec @ 30fps)
+
+# AU Extraction Settings (MediaPipe Face Mesh)
+au_extraction:
+  min_detection_confidence: 0.5
+  min_tracking_confidence: 0.5
+
+  # AU Definitions - Add new AUs here to extend the system
+  # Each AU has a unique ID, name, and method reference
+  au_definitions:
+    au1:
+      name: "Inner Brow Raiser"
+      description: "내측 눈썹 올림"
+      enabled: true
+    au2:
+      name: "Outer Brow Raiser"
+      description: "외측 눈썹 올림"
+      enabled: false  # Not implemented yet
+    au4:
+      name: "Brow Lowerer"
+      description: "눈썹 찡그림"
+      enabled: true
+    au5:
+      name: "Upper Lid Raiser"
+      description: "윗 눈꺼풀 올림"
+      enabled: false  # Not implemented yet
+    au6:
+      name: "Cheek Raiser"
+      description: "뺨 올림"
+      enabled: true
+    au7:
+      name: "Lid Tightener"
+      description: "눈꺼풀 조임"
+      enabled: false  # Not implemented yet
+    au9:
+      name: "Nose Wrinkler"
+      description: "코 주름"
+      enabled: false  # Not implemented yet
+    au10:
+      name: "Upper Lip Raiser"
+      description: "윗입술 올림"
+      enabled: false  # Not implemented yet
+    au12:
+      name: "Lip Corner Puller"
+      description: "입꼬리 올림 (미소)"
+      enabled: true
+    au15:
+      name: "Lip Corner Depressor"
+      description: "입꼬리 내림 (찡그림)"
+      enabled: true
+    au17:
+      name: "Chin Raiser"
+      description: "턱 올림"
+      enabled: false  # Not implemented yet
+    au20:
+      name: "Lip Stretcher"
+      description: "입술 늘림"
+      enabled: false  # Not implemented yet
+    au23:
+      name: "Lip Tightener"
+      description: "입술 조임"
+      enabled: false  # Not implemented yet
+    au25:
+      name: "Lips Part"
+      description: "입술 벌림"
+      enabled: false  # Not implemented yet
+    au26:
+      name: "Jaw Drop"
+      description: "턱 내림"
+      enabled: false  # Not implemented yet
+    au27:
+      name: "Mouth Stretch"
+      description: "입 늘림"
+      enabled: false  # Not implemented yet
+
+# Emotion Classification Settings
+emotion_classification:
+  # AU-based ML classifier (indirect method)
+  use_ml_classifier: false # Use ML model (true) or rule-based (false)
+  model_path: "models/emotion_classifier.pkl" # Path to trained ML model
+  model_type: "random_forest" # ML model type: random_forest, svm, mlp
+
+  # CNN-based classifier (direct method)
+  use_cnn_classifier: false # Use CNN for direct image-to-emotion classification
+  cnn_model_type: "mobilenet_v2" # CNN architecture: mobilenet_v2, resnet18, efficientnet_b0
+  cnn_model_path: "models/cnn_emotion.pth" # Path to trained CNN model
+  cnn_input_size: 224 # Input image size for CNN (224x224)
+
+  # Ensemble mode (combine AU-based and CNN-based)
+  use_ensemble: false # Combine predictions from both classifiers
+  ensemble_weights:
+    au_based: 0.6 # Weight for AU-based classifier
+    cnn_based: 0.4 # Weight for CNN-based classifier
+
+  smoothing_window: 5 # Number of frames for temporal smoothing
+
+  # Emotion Definitions - Add new emotions here to extend the system
+  # Each emotion has AU combinations and weights for rule-based classification
+  emotion_definitions:
+    Neutral:
+      color: [200, 200, 200]  # BGR color for visualization
+      description: "중립 (감정 활성화 없음)"
+      au_rules:
+        threshold: 0.15  # All AUs below this = Neutral
+
+    Happy:
+      color: [0, 255, 0]  # Green
+      description: "행복 (미소)"
+      au_rules:
+        primary:
+          au12: 0.7  # Lip Corner Puller (smile) - 70% weight
+        secondary:
+          au6: 0.3   # Cheek Raiser (genuine smile) - 30% weight
+        threshold: 0.3  # Minimum intensity to classify as Happy
+
+    Sad:
+      color: [255, 0, 0]  # Blue
+      description: "슬픔 (우울)"
+      au_rules:
+        primary:
+          au15: 0.5  # Lip Corner Depressor - 50% weight
+        secondary:
+          au4: 0.25  # Brow Lowerer - 25% weight
+          au1: 0.25  # Inner Brow Raiser - 25% weight
+        threshold: 0.3  # Minimum intensity to classify as Sad
+
+    # Example: Adding new emotions (disabled by default)
+    Angry:
+      color: [0, 0, 255]  # Red
+      description: "분노"
+      enabled: false  # Set to true to enable
+      au_rules:
+        primary:
+          au4: 0.4   # Brow Lowerer
+          au7: 0.3   # Lid Tightener
+        secondary:
+          au23: 0.3  # Lip Tightener
+        threshold: 0.4
+
+    Surprised:
+      color: [0, 255, 255]  # Yellow
+      description: "놀람"
+      enabled: false  # Set to true to enable
+      au_rules:
+        primary:
+          au1: 0.3   # Inner Brow Raiser
+          au2: 0.3   # Outer Brow Raiser
+          au5: 0.2   # Upper Lid Raiser
+        secondary:
+          au26: 0.2  # Jaw Drop
+        threshold: 0.4
+
+    Fear:
+      color: [128, 0, 128]  # Purple
+      description: "두려움"
+      enabled: false  # Set to true to enable
+      au_rules:
+        primary:
+          au1: 0.3   # Inner Brow Raiser
+          au4: 0.3   # Brow Lowerer
+          au5: 0.2   # Upper Lid Raiser
+        secondary:
+          au20: 0.2  # Lip Stretcher
+        threshold: 0.4
+
+    Disgust:
+      color: [0, 128, 128]  # Olive
+      description: "혐오"
+      enabled: false  # Set to true to enable
+      au_rules:
+        primary:
+          au9: 0.4   # Nose Wrinkler
+          au10: 0.3  # Upper Lip Raiser
+        secondary:
+          au17: 0.3  # Chin Raiser
+        threshold: 0.4
+
+# AU Storage Settings
+au_storage:
+  max_history_seconds: 60.0 # Maximum AU history to keep per face
+  fps: 30 # Expected frame rate
+
+# Recording Settings
+recording:
+  output_dir: "data/recordings"
+  sample_rate: 10 # Save every Nth frame (1=all frames, 5=every 5th frame, 10=every 10th frame)
+  # At 30fps input:
+  #   sample_rate=1  -> 30fps output (high precision, large file)
+  #   sample_rate=5  -> 6fps output (recommended - balanced quality/size)
+  #   sample_rate=10 -> 3fps output (low storage)
+  #   sample_rate=30 -> 1fps output (minimum storage)
+
+# Visualization Settings
+visualization:
+  show_landmarks: false # Show facial landmarks for debugging
+  landmark_mode: "simple" # 'simple' (AU only), 'full' (all 478), 'mesh' (with connections)
+  show_au_values: true # Show AU values next to face
+  show_emotion_bar: true # Show emotion intensity bar
